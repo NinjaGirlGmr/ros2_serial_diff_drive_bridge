@@ -28,19 +28,6 @@ If `pyserial` is not already available in your ROS Python environment:
 pip install pyserial
 ```
 
-## Use As A Separate Repo
-This folder is now self-contained (it includes `package.xml`, `setup.py`, `LICENSE`, `.gitignore`, launch/config files, and CI workflow).
-
-To split it into its own repository:
-
-```bash
-cp -R /path/to/RobotMotorDriver/ros2_serial_diff_drive_bridge /path/to/new-repo
-cd /path/to/new-repo
-git init
-git add .
-git commit -m "Initial ROS 2 serial diff drive bridge"
-```
-
 CI workflow:
 - GitHub Actions config is included at `.github/workflows/ci.yml`
 - It runs Python syntax checks and packaging metadata smoke checks
