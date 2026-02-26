@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  python-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install minimal dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyserial setuptools
+
+      - name: Syntax check Python sources
+        run: |
+          python -m py_compile \
+            ros2_serial_diff_drive_bridge/bridge_node.py \
+            launch/ros2_serial_diff_drive_bridge.launch.py \
+            setup.py
+
+      - name: Packaging metadata smoke test
+        run: |
+          python setup.py --name
+          python setup.py --version
