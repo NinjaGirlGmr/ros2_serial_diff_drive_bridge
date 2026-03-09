@@ -176,10 +176,17 @@ class SerialDiffDriveBridge(Node):
 
     def parse_state_line(self, line: str) -> Optional[RobotState]:
         parts = [p.strip() for p in line.split(",")]
-        if len(parts) < 9 or parts[0] != "STATE":
+        if not parts or parts[0] != "STATE":
+            return None
+
+        # Accept firmware lines with a trailing comma and optional extra fields.
+        while parts and parts[-1] == "":
+            parts.pop()
+        if len(parts) < 8:
             return None
 
         try:
+            avg_distance_mm = float(parts[8]) if len(parts) >= 9 else 0.0
             return RobotState(
                 fw_millis=int(parts[1]),
                 left_pos_rad=float(parts[2]),
@@ -188,7 +195,7 @@ class SerialDiffDriveBridge(Node):
                 right_vel_rad_s=float(parts[5]),
                 linear_mps=float(parts[6]),
                 angular_rad_s=float(parts[7]),
-                avg_distance_mm=float(parts[8]),
+                avg_distance_mm=avg_distance_mm,
             )
         except ValueError:
             self.get_logger().warn(f"Malformed STATE line: {line}")
