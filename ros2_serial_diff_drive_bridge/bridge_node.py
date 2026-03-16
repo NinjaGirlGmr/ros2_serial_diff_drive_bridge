@@ -69,6 +69,10 @@ class SerialDiffDriveBridge(Node):
         self.declare_parameter("cmd_timeout_sec", 0.5)
         self.declare_parameter("max_linear_mps", 1.5)
         self.declare_parameter("max_angular_rad_s", 6.0)
+        self.declare_parameter("enable_stall_compensation", False)
+        self.declare_parameter("min_effective_linear_mps", 0.0)
+        self.declare_parameter("min_effective_angular_rad_s", 0.0)
+        self.declare_parameter("zero_cmd_epsilon", 1.0e-4)
         self.declare_parameter("serial_poll_hz", 200.0)
 
         self.port = self.get_parameter("port").get_parameter_value().string_value
@@ -86,6 +90,10 @@ class SerialDiffDriveBridge(Node):
         self.cmd_timeout_sec = float(self.get_parameter("cmd_timeout_sec").value)
         self.max_linear_mps = float(self.get_parameter("max_linear_mps").value)
         self.max_angular_rad_s = float(self.get_parameter("max_angular_rad_s").value)
+        self.enable_stall_compensation = bool(self.get_parameter("enable_stall_compensation").value)
+        self.min_effective_linear_mps = max(0.0, float(self.get_parameter("min_effective_linear_mps").value))
+        self.min_effective_angular_rad_s = max(0.0, float(self.get_parameter("min_effective_angular_rad_s").value))
+        self.zero_cmd_epsilon = max(0.0, float(self.get_parameter("zero_cmd_epsilon").value))
         self.serial_poll_hz = float(self.get_parameter("serial_poll_hz").value)
 
         if serial is None:
@@ -115,6 +123,15 @@ class SerialDiffDriveBridge(Node):
         self.serial_timer = self.create_timer(serial_period, self.poll_serial)
         self.cmd_timer = self.create_timer(cmd_period, self.send_cmd_timer)
 
+    def apply_min_effective(self, value: float, min_magnitude: float) -> float:
+        if min_magnitude <= 0.0:
+            return value
+        if abs(value) <= self.zero_cmd_epsilon:
+            return 0.0
+        if abs(value) < min_magnitude:
+            return math.copysign(min_magnitude, value)
+        return value
+
     def destroy_node(self) -> bool:
         try:
             with self.serial_lock:
@@ -142,6 +159,12 @@ class SerialDiffDriveBridge(Node):
         if age > self.cmd_timeout_sec:
             linear = 0.0
             angular = 0.0
+        elif self.enable_stall_compensation:
+            linear = self.apply_min_effective(linear, self.min_effective_linear_mps)
+            angular = self.apply_min_effective(angular, self.min_effective_angular_rad_s)
+
+        linear = clamp(linear, -self.max_linear_mps, self.max_linear_mps)
+        angular = clamp(angular, -self.max_angular_rad_s, self.max_angular_rad_s)
 
         line = f"CMD_VEL,{linear:.6f},{angular:.6f}\n"
         try:

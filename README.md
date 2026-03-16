@@ -62,3 +62,9 @@ ros2 launch ros2_serial_diff_drive_bridge ros2_serial_diff_drive_bridge.launch.p
 ## Notes
 - The firmware must be flashed with the `CMD_VEL` / `STATE` protocol updates from this repo.
 - Firmware `maxWheelLinearSpeedMps` should be tuned for good speed tracking.
+
+## Optional Stall Compensation Parameters
+- `enable_stall_compensation` (`bool`, default `false`): when enabled, non-zero command magnitudes are raised to minimum effective values.
+- `min_effective_linear_mps` (`float`, default `0.0`): minimum absolute non-zero linear command.
+- `min_effective_angular_rad_s` (`float`, default `0.0`): minimum absolute non-zero angular command.
+- `zero_cmd_epsilon` (`float`, default `1e-4`): commands with magnitude <= epsilon are treated as exact zero.

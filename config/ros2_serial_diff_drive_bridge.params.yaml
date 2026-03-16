@@ -15,4 +15,8 @@ serial_diff_drive_bridge:
     cmd_timeout_sec: 0.5
     max_linear_mps: 1.5
     max_angular_rad_s: 6.0
+    enable_stall_compensation: false
+    min_effective_linear_mps: 0.0
+    min_effective_angular_rad_s: 0.0
+    zero_cmd_epsilon: 0.0001
     serial_poll_hz: 200.0
